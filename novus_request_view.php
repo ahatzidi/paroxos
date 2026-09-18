@@ -49,6 +49,7 @@ $uploadMessage = $_GET['uploaded'] ?? null;
     .badge.approved, .badge.completed { background: #d1fae5; color: #065f46; }
     .badge.rejected, .badge.action_required, .badge.cancelled, .badge.failed { background: #fde8e8; color: #9b1c1c; }
     .notice { background: #fef3c7; color: #92400e; padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
+    .callout { background: #fff7ed; border: 2px solid #f59e0b; color: #7c2d12; padding: 14px 18px; border-radius: 8px; margin: 16px 0; font-size: 1.02rem; }
     .success { background: #d1fae5; color: #065f46; padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
     .btn { display: inline-block; padding: 10px 20px; font-size: 1rem; background: #1a56db; color: #fff; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; margin-top: 8px; }
     .btn:hover { background: #1544ab; }
@@ -65,7 +66,12 @@ $uploadMessage = $_GET['uploaded'] ?? null;
 
 <p><span class="badge <?= strtolower($data['status']) ?>"><?= htmlspecialchars($statusLabel, ENT_QUOTES) ?></span></p>
 
-<?php if (!empty($data['message'])): ?>
+<?php if ($data['status'] === 'PENDING_SIGNATURE'): ?>
+    <div class="callout">
+        Η σύμβασή σας έχει ετοιμαστεί. Πρέπει να την κατεβάσετε, να την υπογράψετε, και να
+        την ανεβάσετε στο πεδίο «Ανέβασμα» ώστε να σταλεί στον πάροχο.
+    </div>
+<?php elseif (!empty($data['message'])): ?>
     <p><?= htmlspecialchars($data['message'], ENT_QUOTES) ?></p>
 <?php endif; ?>
 

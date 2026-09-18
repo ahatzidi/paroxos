@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     table td, table th { text-align: left; padding: 8px; border-bottom: 1px solid #eee; vertical-align: top; }
     table th { width: 220px; color: #555; }
     ul { margin: 0; padding-left: 18px; }
+    .hint-text { color: #555; margin-bottom: 16px; }
     .btn { display: inline-block; margin-top: 16px; padding: 10px 20px; font-size: 1rem; background: #1a56db; color: #fff; border-radius: 6px; text-decoration: none; }
     .btn:hover { background: #1544ab; }
 </style>
@@ -54,6 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 
 <h1>Αναζήτηση στοιχείων επιχείρησης (ΑΑΔΕ)</h1>
+
+<p class="hint-text">Συμπληρώστε το ΑΦΜ σας ώστε να αντλήσουμε τα στοιχεία σας και να συμπληρώσουμε τα πεδία της φόρμας προς τον πάροχο.</p>
 
 <form method="post" action="">
     <div class="search-row">
