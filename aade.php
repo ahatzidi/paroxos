@@ -42,7 +42,7 @@ function aade_search_afm($afm) {
         ]);
         $client->__setSoapHeaders([aade_build_wsse_header($AADE_USERNAME, $AADE_PASSWORD)]);
 
-        $response = $client->rgWsPublicAfmMethod([
+        $response = $client->rgWsPublic2AfmMethod([
             'INPUT_REC' => [
                 'afm_called_by' => $AADE_AFM_CALLED_BY,
                 'afm_called_for' => $afm,
@@ -53,19 +53,20 @@ function aade_search_afm($afm) {
     }
 
     $raw = json_decode(json_encode($response), true);
+    $result = $raw['result']['rg_ws_public2_result_rtType'] ?? null;
 
-    $errorRec = $raw['rg_ws_public_afm_method_result']['error_rec'] ?? null;
+    $errorRec = $result['error_rec'] ?? null;
     if (!empty($errorRec) && !empty($errorRec['error_descr'])) {
         return ['ok' => false, 'error' => $errorRec['error_descr'], 'data' => null, 'raw' => $raw];
     }
 
-    $basic = $raw['rg_ws_public_afm_method_result']['basic_rt'] ?? null;
+    $basic = $result['basic_rec'] ?? null;
     if (empty($basic)) {
         return ['ok' => false, 'error' => 'Δεν βρέθηκαν στοιχεία για το ΑΦΜ ' . $afm, 'data' => null, 'raw' => $raw];
     }
 
     $activities = [];
-    $firmActTab = $raw['rg_ws_public_afm_method_result']['firm_act_tab']['item'] ?? [];
+    $firmActTab = $result['firm_act_tab']['item'] ?? [];
     if (isset($firmActTab['firm_act_descr'])) {
         $firmActTab = [$firmActTab];
     }
@@ -74,7 +75,7 @@ function aade_search_afm($afm) {
             $activities[] = [
                 'code' => $act['firm_act_code'] ?? null,
                 'description' => $act['firm_act_descr'],
-                'is_main' => ($act['firm_act_kind_code'] ?? null) === '1',
+                'kind_descr' => $act['firm_act_kind_descr'] ?? '',
             ];
         }
     }

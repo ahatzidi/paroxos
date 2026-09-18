@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php foreach ($result['activities'] as $act): ?>
                     <li>
                         <?= htmlspecialchars($act['description'], ENT_QUOTES) ?>
-                        <?= $act['is_main'] ? ' (κύρια)' : '' ?>
+                        <?= !empty($act['kind_descr']) ? ' (' . htmlspecialchars($act['kind_descr'], ENT_QUOTES) . ')' : '' ?>
                     </li>
                 <?php endforeach; ?>
                 </ul>
