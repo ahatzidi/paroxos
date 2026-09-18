@@ -1,6 +1,7 @@
 # Paroxos
 
-Εφαρμογή PHP/MariaDB που θα συνδέεται με δύο πλατφόρμες:
+Απλή εφαρμογή σε plain PHP/HTML (χωρίς frameworks, χωρίς composer) που θα
+συνδέεται με δύο πλατφόρμες:
 
 1. **ΑΑΔΕ** — βασική αναζήτηση στοιχείων επιχειρήσεων βάσει ΑΦΜ (webservice `RgWsPublic2`).
 2. **Πάροχος** — θα προστεθεί σε επόμενο βήμα.
@@ -9,48 +10,50 @@
 
 ### Απαιτήσεις
 
-- PHP 8.1+ με τις επεκτάσεις `soap` και `pdo_mysql`
+- PHP 8+ με τις επεκτάσεις `soap` και `mysqli` (ενεργές by default στα
+  περισσότερα shared hosting)
 - MariaDB/MySQL
 - Στοιχεία πρόσβασης στο δημόσιο webservice Μητρώου της ΑΑΔΕ. Γίνεται δωρεάν
   εγγραφή/ενεργοποίηση μέσω του ΑΦΜ της επιχείρησής σας εδώ:
   https://www1.aade.gr/webtax/wspublicreg/wspublicreg.php
 
-### Εγκατάσταση
+### Εγκατάσταση (3 βήματα)
 
-```bash
-cp config/config.example.php config/config.php
-```
+1. Αντιγράψτε το `config.example.php` σε `config.php` και συμπληρώστε:
+   - στοιχεία σύνδεσης MariaDB
+   - το username/password από την ΑΑΔΕ
+   - το `AADE_AFM_CALLED_BY` (το ΑΦΜ σας)
 
-Συμπληρώστε στο `config/config.php`:
-- τα στοιχεία σύνδεσης στη MariaDB
-- το username/password που πήρατε από την ΑΑΔΕ
-- το `afm_called_by` (το ΑΦΜ για λογαριασμό του οποίου γίνεται η κλήση)
+   ```bash
+   cp config.example.php config.php
+   ```
 
-Δημιουργήστε τη βάση και εκτελέστε το schema:
+2. Δημιουργήστε τη βάση και τον πίνακα:
 
-```bash
-mysql -u root -p -e "CREATE DATABASE paroxos CHARACTER SET utf8mb4"
-mysql -u root -p paroxos < sql/schema.sql
-```
+   ```bash
+   mysql -u root -p -e "CREATE DATABASE paroxos CHARACTER SET utf8mb4"
+   mysql -u root -p paroxos < sql/schema.sql
+   ```
 
-Τρέξτε τον ενσωματωμένο server για δοκιμή:
+3. Ανεβάστε όλα τα αρχεία σε οποιοδήποτε hosting με PHP, ή δοκιμάστε τοπικά:
 
-```bash
-php -S localhost:8000 -t public
-```
+   ```bash
+   php -S localhost:8000
+   ```
 
-και ανοίξτε `http://localhost:8000`.
+   και ανοίξτε `http://localhost:8000`.
 
-### Πώς λειτουργεί
+### Αρχεία
 
-- `public/index.php` — η φόρμα αναζήτησης ΑΦΜ.
-- `src/Aade/AadeClient.php` — SOAP client με WS-Security header για το
-  webservice `RgWsPublicAfmMethod` της ΑΑΔΕ.
-- `src/Aade/CompanyRepository.php` — αποθηκεύει/ενημερώνει τα αποτελέσματα
-  στον πίνακα `companies` (cache, ώστε να μη γίνεται κλήση στην ΑΑΔΕ σε κάθε
-  προβολή).
+- `index.php` — η φόρμα αναζήτησης ΑΦΜ (όλο το UI + λογική σε ένα αρχείο).
+- `aade.php` — συνάρτηση `aade_search_afm($afm)` που καλεί το SOAP webservice
+  της ΑΑΔΕ (με WS-Security header, όπως απαιτείται).
+- `db.php` — σύνδεση mysqli + συνάρτηση `save_company()` που αποθηκεύει τα
+  αποτελέσματα στον πίνακα `companies` (cache, ώστε να μη γίνεται κλήση στην
+  ΑΑΔΕ σε κάθε προβολή).
+- `config.php` — τα δικά σας στοιχεία (δεν ανεβαίνει σε git).
 
 > Σημείωση: τα ονόματα πεδίων της απάντησης της ΑΑΔΕ ενδέχεται να διαφέρουν
 > ελαφρώς ανάλογα με την έκδοση του WSDL. Αν κάποιο πεδίο εμφανίζεται κενό,
-> ελέγξτε το raw response (`$response['raw']` στο `AadeClient::searchByAfm`)
-> για τα ακριβή ονόματα.
+> κάντε `var_dump($response['raw'])` μέσα στο `aade_search_afm()` για να δείτε
+> τα ακριβή ονόματα που επιστρέφει η ΑΑΔΕ.

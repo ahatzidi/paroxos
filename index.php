@@ -1,49 +1,23 @@
 <?php
-
-declare(strict_types=1);
-
-require __DIR__ . '/../src/bootstrap.php';
-
-use Paroxos\Aade\AadeClient;
-use Paroxos\Aade\CompanyRepository;
-use Paroxos\Db;
-
-$config = require __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/aade.php';
 
 $afmInput = '';
 $result = null;
 $errorMessage = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $afmInput = trim((string) ($_POST['afm'] ?? ''));
-    $afm = preg_replace('/\D/', '', $afmInput);
+    $afmInput = trim($_POST['afm'] ?? '');
 
-    if (strlen($afm) !== 9) {
-        $errorMessage = 'Το ΑΦΜ πρέπει να αποτελείται από 9 ψηφία.';
+    $response = aade_search_afm($afmInput);
+
+    if (!$response['ok']) {
+        $errorMessage = $response['error'];
     } else {
-        try {
-            $client = new AadeClient($config['aade']);
-            $response = $client->searchByAfm($afm);
-
-            if (!$response['ok']) {
-                $errorMessage = $response['error'];
-            } else {
-                $result = $response['data'];
-
-                try {
-                    $repo = new CompanyRepository(Db::connection());
-                    $repo->upsert($response['data'], $response['raw']);
-                } catch (\Throwable $e) {
-                    // Η αποθήκευση στη βάση δεν πρέπει να μπλοκάρει την εμφάνιση αποτελέσματος.
-                    error_log('Αποτυχία αποθήκευσης εταιρίας: ' . $e->getMessage());
-                }
-            }
-        } catch (\Throwable $e) {
-            $errorMessage = 'Απρόσμενο σφάλμα: ' . $e->getMessage();
-        }
+        $result = $response['data'];
+        save_company($result, $response['raw']);
     }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="el">
