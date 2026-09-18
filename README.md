@@ -103,3 +103,68 @@ $NOVUS_API_KEY = 'nvuscnspts_...';
 > Το webservice απαιτεί πραγματικό ΑΦΜ με σωστό check digit — δοκιμαστικά «123456789» απορρίπτονται.
 > Δείτε το `9. Παγίδες` στο έγγραφο Novus Onboarding API για τις πιο συνηθισμένες παγίδες
 > (`contract: null` σε `LINK_EXISTING`, μία ανοιχτή αίτηση ανά ΑΦΜ, κ.λπ.).
+
+## Βήμα 3: Webhook από τη Novus + ειδοποίηση email
+
+Κάθε φορά που αλλάζει κατάσταση μια αίτηση (υπογράφηκε, εγκρίθηκε, ενεργοποιήθηκε ο
+πελάτης κ.λπ.), η Novus μπορεί να καλεί ένα endpoint μας αντί να κάνουμε εμείς polling.
+
+### Ρύθμιση
+
+Στο `config.php` συμπληρώστε τα στοιχεία SMTP (Amazon SES) και το δημόσιο URL της
+εγκατάστασης:
+
+```php
+$NOVUS_WEBHOOK_SECRET = ''; // συμπληρώνεται ΜΕΤΑ την εγγραφή, βλ. παρακάτω
+$APP_BASE_URL = 'https://paroxos.totalschool.gr';
+
+$mailhost = 'email-smtp.eu-west-1.amazonaws.com';
+$mailport = 587;
+$mailusername = '...';
+$mailpassword = '...';
+$mail_from_email = 'noreply@yourdomain.gr';
+$mail_from_name = 'Paroxos';
+$mail_to = 'you@yourdomain.gr'; // πού θα φτάνουν οι ειδοποιήσεις
+```
+
+Ο πίνακας `novus_webhook_events` δημιουργείται μαζί με τα υπόλοιπα από το `sql/schema.sql`.
+
+### Δήλωση του webhook στη Novus
+
+Όταν είστε έτοιμοι να ενημερώσετε τη Novus, ανοίξτε στο browser (μία φορά):
+
+```
+https://paroxos.totalschool.gr/novus_webhook_register.php
+```
+
+Θα καλέσει `POST /api/v1/webhooks` και θα τυπώσει ένα `secret` — **εμφανίζεται μόνο
+αυτή τη φορά**. Αντιγράψτε το αμέσως στο `config.php` (`$NOVUS_WEBHOOK_SECRET`) και
+μετά διαγράψτε ή κλειδώστε το `novus_webhook_register.php` (π.χ. με `.htaccess` ή
+διαγραφή από τον server), ώστε να μην μπορεί κανείς να ξαναδηλώσει webhook.
+
+### Πώς λειτουργεί το `novus_webhook.php`
+
+1. Επαληθεύει το header `X-Novus-Signature` (HMAC-SHA256 του raw body με το secret) —
+   αν δεν ταιριάζει, απαντά 401 και δεν επεξεργάζεται τίποτα.
+2. Αν το `eventId` το έχουμε ήδη δει (retry της Novus), απαντά 200 χωρίς να το
+   ξαναεπεξεργαστεί.
+3. Κάνει `GET /api/v1/requests/{requestId}` για την πραγματική κατάσταση (το webhook
+   λέει μόνο «κάτι άλλαξε», όχι την αλήθεια) και ενημερώνει το `novus_requests`.
+4. Καταγράφει το event στο `novus_webhook_events`, συνδεδεμένο με το `requestId` και
+   το ΑΦΜ της εταιρίας.
+5. Στέλνει email (μέσω SMTP) στο `$mail_to` με τα στοιχεία του event και link προς
+   `novus_request_view.php`.
+
+### Αρχεία
+
+- `novus_webhook.php` — το endpoint (URL προς δήλωση: `$APP_BASE_URL/novus_webhook.php`).
+- `novus_webhook_register.php` — μονής χρήσης script δήλωσης/λήψης secret.
+- `mail.php` — ελάχιστος SMTP client (STARTTLS + AUTH LOGIN), χωρίς PHPMailer/composer.
+- Στο `novus.php`: `novus_register_webhook()`, `novus_list_webhooks()`,
+  `novus_delete_webhook()`, `novus_verify_webhook_signature()`.
+- Στο `db.php`: `webhook_event_exists()`, `save_webhook_event()`, `mark_webhook_event_email_sent()`.
+
+> Η αποστολή email γίνεται συγχρονισμένα μέσα στο ίδιο request πριν απαντήσουμε στη
+> Novus. Αν το SMTP είναι αργό, καθυστερεί λίγο το 200 OK — αποδεκτό για τον όγκο
+> events που περιγράφει το API, αλλά αν χρειαστεί ποτέ ταχύτερο ack, ο πιο απλός δρόμος
+> είναι να καταγράφεται το event πρώτα και να στέλνεται το email με ξεχωριστό cron.

@@ -161,3 +161,65 @@ function list_novus_requests_by_afm($afm) {
 
     return $rows;
 }
+
+// True αν έχουμε ήδη καταγράψει αυτό το eventId (προστασία από διπλά webhook deliveries).
+function webhook_event_exists($eventId) {
+    $conn = get_db();
+    $stmt = mysqli_prepare($conn, 'SELECT id FROM novus_webhook_events WHERE event_id = ? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 's', $eventId);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_store_result($stmt);
+    $exists = mysqli_stmt_num_rows($stmt) > 0;
+    mysqli_stmt_close($stmt);
+
+    return $exists;
+}
+
+// Καταγράφει ένα webhook event. Επιστρέφει το id της νέας εγγραφής.
+function save_webhook_event($eventId, $eventType, $requestId, $companyAfm, $occurredAt, $signatureValid, $payload) {
+    $conn = get_db();
+
+    $sql = 'INSERT INTO novus_webhook_events
+                (event_id, event_type, novus_request_id, company_afm, occurred_at, signature_valid, payload_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?)';
+
+    $stmt = mysqli_prepare($conn, $sql);
+
+    $occurredAtSql = null;
+    if ($occurredAt) {
+        $ts = strtotime($occurredAt);
+        if ($ts !== false) {
+            $occurredAtSql = date('Y-m-d H:i:s', $ts);
+        }
+    }
+    $signatureValidInt = $signatureValid ? 1 : 0;
+    $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE);
+
+    mysqli_stmt_bind_param(
+        $stmt,
+        'sssssis',
+        $eventId,
+        $eventType,
+        $requestId,
+        $companyAfm,
+        $occurredAtSql,
+        $signatureValidInt,
+        $payloadJson
+    );
+
+    mysqli_stmt_execute($stmt);
+    $id = mysqli_insert_id($conn);
+    mysqli_stmt_close($stmt);
+
+    return $id;
+}
+
+// Σημειώνει ότι στάλθηκε (ή όχι) το email ειδοποίησης για ένα event.
+function mark_webhook_event_email_sent($eventDbId, $sent) {
+    $conn = get_db();
+    $stmt = mysqli_prepare($conn, 'UPDATE novus_webhook_events SET email_sent = ? WHERE id = ?');
+    $sentInt = $sent ? 1 : 0;
+    mysqli_stmt_bind_param($stmt, 'ii', $sentInt, $eventDbId);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+}

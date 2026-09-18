@@ -20,3 +20,19 @@ $AADE_AFM_CALLED_BY = '000000000'; // το ΑΦΜ σας, για λογαρια�
 // Ξεκινήστε με το δοκιμαστικό URL/κλειδί, ζητήστε τα από τη Novus.
 $NOVUS_API_URL = 'https://provider-dev.timologisi.online';
 $NOVUS_API_KEY = 'nvuscnspts_your_key_here';
+
+// Το secret του webhook. Η Novus το επιστρέφει ΜΙΑ ΦΟΡΑ όταν κάνετε
+// POST /api/v1/webhooks (βλ. novus_webhook_register.php). Αντιγράψτε το εδώ.
+$NOVUS_WEBHOOK_SECRET = '';
+
+// Δημόσιο URL της εγκατάστασής σας (χωρίς τελικό /), για apsolute links σε emails.
+$APP_BASE_URL = 'https://paroxos.totalschool.gr';
+
+// ##########   Amazon SMTP    ##########
+$mailhost = 'email-smtp.eu-west-1.amazonaws.com';
+$mailport = 587;
+$mailusername = 'your_ses_smtp_username';
+$mailpassword = 'your_ses_smtp_password';
+$mail_from_email = 'noreply@yourdomain.gr';
+$mail_from_name = 'Paroxos';
+$mail_to = 'you@yourdomain.gr'; // παραλήπτης ειδοποιήσεων webhook

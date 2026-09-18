@@ -181,3 +181,35 @@ function novus_format_error($error, $rawError = null) {
 
     return $message;
 }
+
+// --- Webhooks ---
+
+// Δηλώνει το endpoint μας στη Novus. Το secret επιστρέφεται ΜΙΑ ΦΟΡΑ — αποθηκεύστε το.
+function novus_register_webhook($url, $events = ['request.status_changed', 'request.provisioned']) {
+    return novus_call('POST', '/api/v1/webhooks', ['url' => $url, 'events' => $events]);
+}
+
+function novus_list_webhooks() {
+    return novus_call('GET', '/api/v1/webhooks');
+}
+
+function novus_delete_webhook($endpointId) {
+    return novus_call('DELETE', '/api/v1/webhooks/' . urlencode($endpointId));
+}
+
+function novus_list_webhook_deliveries() {
+    return novus_call('GET', '/api/v1/webhooks/deliveries');
+}
+
+// Επαληθεύει το header X-Novus-Signature ("sha256=<HMAC-SHA256 hex>") πάνω στο ακριβές raw body.
+function novus_verify_webhook_signature($rawBody, $signatureHeader) {
+    global $NOVUS_WEBHOOK_SECRET;
+
+    if (empty($NOVUS_WEBHOOK_SECRET) || empty($signatureHeader)) {
+        return false;
+    }
+
+    $expected = 'sha256=' . hash_hmac('sha256', $rawBody, $NOVUS_WEBHOOK_SECRET);
+
+    return hash_equals($expected, $signatureHeader);
+}
