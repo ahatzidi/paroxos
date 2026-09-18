@@ -8,7 +8,7 @@ const AADE_WSSE_NS = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-ws
 function aade_build_wsse_header($username, $password) {
     $xml = sprintf(
         '<wsse:Security xmlns:wsse="%s" soap:mustUnderstand="1"
-            xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
             <wsse:UsernameToken>
                 <wsse:Username>%s</wsse:Username>
                 <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">%s</wsse:Password>
@@ -39,6 +39,7 @@ function aade_search_afm($afm) {
             'exceptions' => true,
             'connection_timeout' => 15,
             'cache_wsdl' => WSDL_CACHE_MEMORY,
+            'soap_version' => SOAP_1_2,
         ]);
         $client->__setSoapHeaders([aade_build_wsse_header($AADE_USERNAME, $AADE_PASSWORD)]);
 
