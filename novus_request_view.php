@@ -50,7 +50,7 @@ $uploadMessage = $_GET['uploaded'] ?? null;
     .badge.rejected, .badge.action_required, .badge.cancelled, .badge.failed { background: #fde8e8; color: #9b1c1c; }
     .notice { background: #fef3c7; color: #92400e; padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
     .callout { background: #fff7ed; border: 2px solid #f59e0b; color: #7c2d12; padding: 14px 18px; border-radius: 8px; margin: 16px 0; font-size: 1.02rem; }
-    .success { background: #d1fae5; color: #065f46; padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
+    .callout a { color: #7c2d12; font-weight: bold; }
     .btn { display: inline-block; padding: 10px 20px; font-size: 1rem; background: #1a56db; color: #fff; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; margin-top: 8px; }
     .btn:hover { background: #1544ab; }
     input[type="file"] { margin-top: 8px; }
@@ -76,7 +76,12 @@ $uploadMessage = $_GET['uploaded'] ?? null;
 <?php endif; ?>
 
 <?php if ($uploadMessage === '1'): ?>
-    <div class="success">Η υπογεγραμμένη σύμβαση ανέβηκε επιτυχώς. Η αίτηση είναι τώρα υπό έλεγχο.</div>
+    <div class="callout">
+        Το συμβόλαιο έχει ληφθεί με επιτυχία. Απομένει η <strong>εξουσιοδότηση του παρόχου
+        στην ΑΑΔΕ</strong>. Θα λάβετε οδηγίες για αυτό το στάδιο με email ή απλώς επισκεφτείτε
+        τη σελίδα <a href="https://verisysgr.atlassian.net/wiki/spaces/TSel/pages/4218191881" target="_blank" rel="noopener">
+        https://verisysgr.atlassian.net/wiki/spaces/TSel/pages/4218191881</a> τώρα!
+    </div>
 <?php endif; ?>
 
 <?php if ($data['requestType'] === 'NEW_CONTRACT' && !empty($data['contract'])): ?>
