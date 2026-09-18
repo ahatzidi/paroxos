@@ -52,6 +52,23 @@
   αποτελέσματα στον πίνακα `companies` (cache, ώστε να μη γίνεται κλήση στην
   ΑΑΔΕ σε κάθε προβολή).
 - `config.php` — τα δικά σας στοιχεία (δεν ανεβαίνει σε git).
+- `turnstile.php` — συνάρτηση `turnstile_verify()` που επαληθεύει στο backend το
+  Cloudflare Turnstile token της φόρμας αναζήτησης (προστασία από bots).
+
+### Cloudflare Turnstile
+
+Η φόρμα αναζήτησης ΑΦΜ (`index.php`) προστατεύεται με [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/).
+Φτιάξτε ένα site στο [Cloudflare dashboard](https://dash.cloudflare.com/?to=/:account/turnstile)
+και συμπληρώστε στο `config.php`:
+
+```php
+$TURNSTILE_SITE_KEY = '...';   // δημόσιο, μπαίνει στο HTML
+$TURNSTILE_SECRET_KEY = '...'; // μυστικό, χρησιμοποιείται μόνο server-side
+```
+
+Χωρίς έγκυρο `$TURNSTILE_SECRET_KEY` η επαλήθευση αποτυγχάνει πάντα και η φόρμα
+δεν θα δέχεται υποβολές — βεβαιωθείτε ότι είναι συμπληρωμένο πριν βάλετε την
+εφαρμογή σε παραγωγή.
 
 > Σημείωση: τα ονόματα πεδίων της απάντησης της ΑΑΔΕ ενδέχεται να διαφέρουν
 > ελαφρώς ανάλογα με την έκδοση του WSDL. Αν κάποιο πεδίο εμφανίζεται κενό,

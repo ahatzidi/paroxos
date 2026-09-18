@@ -16,6 +16,11 @@ $AADE_USERNAME = 'your_aade_username';
 $AADE_PASSWORD = 'your_aade_password';
 $AADE_AFM_CALLED_BY = '000000000'; // το ΑΦΜ σας, για λογαριασμό του οποίου γίνεται η κλήση
 
+// --- Cloudflare Turnstile (προστασία φόρμας αναζήτησης ΑΦΜ από bots) ---
+// Δημιουργία site/secret key: https://dash.cloudflare.com/?to=/:account/turnstile
+$TURNSTILE_SITE_KEY = 'your_turnstile_site_key';
+$TURNSTILE_SECRET_KEY = 'your_turnstile_secret_key';
+
 // --- Στοιχεία πρόσβασης στο Novus Onboarding API (πάροχος ηλεκτρονικής τιμολόγησης) ---
 // Ξεκινήστε με το δοκιμαστικό URL/κλειδί, ζητήστε τα από τη Novus.
 $NOVUS_API_URL = 'https://provider-dev.timologisi.online';

@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/aade.php';
+require_once __DIR__ . '/turnstile.php';
+
+global $TURNSTILE_SITE_KEY;
 
 $afmInput = '';
 $result = null;
@@ -8,14 +11,19 @@ $errorMessage = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $afmInput = trim($_POST['afm'] ?? '');
+    $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
 
-    $response = aade_search_afm($afmInput);
-
-    if (!$response['ok']) {
-        $errorMessage = $response['error'];
+    if (!turnstile_verify($turnstileToken, $_SERVER['REMOTE_ADDR'] ?? null)) {
+        $errorMessage = 'Αποτυχία επαλήθευσης Turnstile. Δοκιμάστε ξανά.';
     } else {
-        $result = $response['data'];
-        save_company($result, $response['raw']);
+        $response = aade_search_afm($afmInput);
+
+        if (!$response['ok']) {
+            $errorMessage = $response['error'];
+        } else {
+            $result = $response['data'];
+            save_company($result, $response['raw']);
+        }
     }
 }
 ?>
@@ -25,10 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Αναζήτηση Επιχείρησης ΑΑΔΕ</title>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
     body { font-family: system-ui, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; }
     h1 { font-size: 1.4rem; }
-    form { display: flex; gap: 8px; margin-bottom: 24px; }
+    form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .search-row { display: flex; gap: 8px; }
     input[type="text"] { flex: 1; padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; }
     button { padding: 10px 20px; font-size: 1rem; background: #1a56db; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
     button:hover { background: #1544ab; }
@@ -46,18 +56,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <h1>Αναζήτηση στοιχείων επιχείρησης (ΑΑΔΕ)</h1>
 
 <form method="post" action="">
-    <input
-        type="text"
-        name="afm"
-        placeholder="ΑΦΜ (9 ψηφία)"
-        maxlength="9"
-        pattern="\d{9}"
-        inputmode="numeric"
-        value="<?= htmlspecialchars($afmInput, ENT_QUOTES) ?>"
-        required
-        autofocus
-    >
-    <button type="submit">Αναζήτηση</button>
+    <div class="search-row">
+        <input
+            type="text"
+            name="afm"
+            placeholder="ΑΦΜ (9 ψηφία)"
+            maxlength="9"
+            pattern="\d{9}"
+            inputmode="numeric"
+            value="<?= htmlspecialchars($afmInput, ENT_QUOTES) ?>"
+            required
+            autofocus
+        >
+        <button type="submit">Αναζήτηση</button>
+    </div>
+    <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($TURNSTILE_SITE_KEY, ENT_QUOTES) ?>"></div>
 </form>
 
 <?php if ($errorMessage): ?>
