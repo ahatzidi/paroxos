@@ -17,3 +17,22 @@ CREATE TABLE IF NOT EXISTS companies (
     updated_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_companies_afm (afm)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS novus_requests (
+    id                     INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_afm            VARCHAR(9)  NOT NULL,
+    novus_request_id       VARCHAR(64) NOT NULL,
+    request_type           VARCHAR(20) NOT NULL DEFAULT '',
+    status                 VARCHAR(30) NOT NULL DEFAULT '',
+    contract_number        VARCHAR(50) NULL,
+    contract_date          DATE NULL,
+    template_version       VARCHAR(20) NULL,
+    provisioning_status    VARCHAR(20) NULL,
+    aade_statement_status  VARCHAR(30) NULL,
+    idempotency_key        VARCHAR(64) NULL,
+    raw_json               JSON NULL,
+    created_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_novus_request_id (novus_request_id),
+    KEY idx_company_afm (company_afm)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

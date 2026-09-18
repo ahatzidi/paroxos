@@ -37,6 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     table td, table th { text-align: left; padding: 8px; border-bottom: 1px solid #eee; vertical-align: top; }
     table th { width: 220px; color: #555; }
     ul { margin: 0; padding-left: 18px; }
+    .btn { display: inline-block; margin-top: 16px; padding: 10px 20px; font-size: 1rem; background: #1a56db; color: #fff; border-radius: 6px; text-decoration: none; }
+    .btn:hover { background: #1544ab; }
 </style>
 </head>
 <body>
@@ -91,6 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </tr>
         <?php endif; ?>
     </table>
+
+    <a class="btn" href="novus_request_new.php?afm=<?= urlencode($result['afm']) ?>">
+        Αίτηση σύνδεσης με Novus &rarr;
+    </a>
 <?php endif; ?>
 
 </body>

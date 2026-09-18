@@ -71,3 +71,93 @@ function save_company($data, $raw) {
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
 }
+
+// Επιστρέφει τα αποθηκευμένα στοιχεία μιας επιχείρησης βάσει ΑΦΜ, ή null.
+function get_company_by_afm($afm) {
+    $conn = get_db();
+    $stmt = mysqli_prepare($conn, 'SELECT * FROM companies WHERE afm = ? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 's', $afm);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($result);
+    mysqli_stmt_close($stmt);
+
+    return $row ?: null;
+}
+
+// Αποθηκεύει/ενημερώνει μια αίτηση Novus από τα δεδομένα που επέστρεψε το API (data block).
+function save_novus_request($companyAfm, $data, $idempotencyKey = null) {
+    $conn = get_db();
+
+    $sql = "INSERT INTO novus_requests (
+                company_afm, novus_request_id, request_type, status,
+                contract_number, contract_date, template_version,
+                provisioning_status, aade_statement_status, idempotency_key, raw_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                request_type = VALUES(request_type),
+                status = VALUES(status),
+                contract_number = VALUES(contract_number),
+                contract_date = VALUES(contract_date),
+                template_version = VALUES(template_version),
+                provisioning_status = VALUES(provisioning_status),
+                aade_statement_status = VALUES(aade_statement_status),
+                raw_json = VALUES(raw_json)";
+
+    $stmt = mysqli_prepare($conn, $sql);
+
+    $contractNumber = $data['contract']['contractNumber'] ?? null;
+    $contractDate = $data['contract']['contractDate'] ?? null;
+    $templateVersion = $data['contract']['templateVersion'] ?? null;
+    $provisioningStatus = $data['provisioning']['status'] ?? null;
+    $aadeStatementStatus = $data['aadeStatement']['status'] ?? null;
+    $rawJson = json_encode($data, JSON_UNESCAPED_UNICODE);
+
+    mysqli_stmt_bind_param(
+        $stmt,
+        'sssssssssss',
+        $companyAfm,
+        $data['requestId'],
+        $data['requestType'],
+        $data['status'],
+        $contractNumber,
+        $contractDate,
+        $templateVersion,
+        $provisioningStatus,
+        $aadeStatementStatus,
+        $idempotencyKey,
+        $rawJson
+    );
+
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+}
+
+// Επιστρέφει την τοπικά αποθηκευμένη αίτηση Novus βάσει requestId, ή null.
+function get_novus_request($novusRequestId) {
+    $conn = get_db();
+    $stmt = mysqli_prepare($conn, 'SELECT * FROM novus_requests WHERE novus_request_id = ? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 's', $novusRequestId);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($result);
+    mysqli_stmt_close($stmt);
+
+    return $row ?: null;
+}
+
+// Επιστρέφει όλες τις αιτήσεις Novus για ένα ΑΦΜ, πιο πρόσφατες πρώτα.
+function list_novus_requests_by_afm($afm) {
+    $conn = get_db();
+    $stmt = mysqli_prepare($conn, 'SELECT * FROM novus_requests WHERE company_afm = ? ORDER BY created_at DESC');
+    mysqli_stmt_bind_param($stmt, 's', $afm);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $rows = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $rows[] = $row;
+    }
+    mysqli_stmt_close($stmt);
+
+    return $rows;
+}

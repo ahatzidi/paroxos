@@ -15,3 +15,8 @@ $AADE_WSDL = 'https://www1.gsis.gr/wsaade/RgWsPublic2/RgWsPublic2?wsdl';
 $AADE_USERNAME = 'your_aade_username';
 $AADE_PASSWORD = 'your_aade_password';
 $AADE_AFM_CALLED_BY = '000000000'; // το ΑΦΜ σας, για λογαριασμό του οποίου γίνεται η κλήση
+
+// --- Στοιχεία πρόσβασης στο Novus Onboarding API (πάροχος ηλεκτρονικής τιμολόγησης) ---
+// Ξεκινήστε με το δοκιμαστικό URL/κλειδί, ζητήστε τα από τη Novus.
+$NOVUS_API_URL = 'https://provider-dev.timologisi.online';
+$NOVUS_API_KEY = 'nvuscnspts_your_key_here';
