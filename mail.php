@@ -34,8 +34,9 @@ function smtp_command($socket, $command, $expectedCode) {
     return $response;
 }
 
-// Στέλνει email μέσω SMTP. Επιστρέφει ['ok' => bool, 'error' => string|null].
-function smtp_send_mail($to, $subject, $htmlBody, $textBody = null) {
+// Στέλνει email μέσω SMTP, με προαιρετικό Cc (string ή array από διευθύνσεις).
+// Επιστρέφει ['ok' => bool, 'error' => string|null].
+function smtp_send_mail($to, $subject, $htmlBody, $textBody = null, $cc = null) {
     global $mailhost, $mailport, $mailusername, $mailpassword, $mail_from_email, $mail_from_name;
 
     if (empty($mailhost) || empty($mailusername) || empty($mailpassword)) {
@@ -44,6 +45,7 @@ function smtp_send_mail($to, $subject, $htmlBody, $textBody = null) {
 
     $port = $mailport ?? 587;
     $textBody = $textBody ?: strip_tags($htmlBody);
+    $ccList = $cc ? (is_array($cc) ? array_filter($cc) : [$cc]) : [];
 
     $socket = null;
 
@@ -70,6 +72,9 @@ function smtp_send_mail($to, $subject, $htmlBody, $textBody = null) {
 
         smtp_command($socket, 'MAIL FROM:<' . $mail_from_email . '>', 250);
         smtp_command($socket, 'RCPT TO:<' . $to . '>', 250);
+        foreach ($ccList as $ccAddress) {
+            smtp_command($socket, 'RCPT TO:<' . $ccAddress . '>', 250);
+        }
         smtp_command($socket, 'DATA', 354);
 
         $boundary = 'paroxos-' . bin2hex(random_bytes(8));
@@ -85,6 +90,10 @@ function smtp_send_mail($to, $subject, $htmlBody, $textBody = null) {
             'MIME-Version: 1.0',
             'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
         ];
+
+        if ($ccList) {
+            $headers[] = 'Cc: <' . implode('>, <', $ccList) . '>';
+        }
 
         $body = "--{$boundary}\r\n"
             . "Content-Type: text/plain; charset=UTF-8\r\n"
@@ -113,4 +122,12 @@ function smtp_send_mail($to, $subject, $htmlBody, $textBody = null) {
         }
         return ['ok' => false, 'error' => $e->getMessage()];
     }
+}
+
+// Γεμίζει το πρότυπο email_templates/notification.html αντικαθιστώντας το %%MSG%%
+// με το δοσμένο (HTML επιτρέπεται, π.χ. <b>, <a>) μήνυμα.
+function render_notification_email($messageHtml) {
+    $template = file_get_contents(__DIR__ . '/email_templates/notification.html');
+
+    return str_replace('%%MSG%%', $messageHtml, $template);
 }

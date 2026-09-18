@@ -106,6 +106,12 @@ $NOVUS_API_KEY = 'nvuscnspts_...';
    - αν χρειάζεται υπογραφή, κατεβάζεις το PDF σύμβασης (`novus_contract_download.php`, proxy
      ώστε να μην εκτίθεται το API key) και ανεβάζεις την υπογεγραμμένη (`novus_signed_contract_upload.php`)
    - μετά την έγκριση βλέπεις την πρόοδο ενεργοποίησης (`provisioning`) και τη δήλωση στην ΑΑΔΕ (`aadeStatement`)
+5. Αν η αίτηση είναι τύπου `NEW_CONTRACT` και το (μη υπογεγραμμένο) αρχείο σύμβασης
+   ληφθεί κανονικά από τη Novus, το `novus_request_create.php` στέλνει αυτόματα email
+   στον πελάτη (στο `contactInfo.email` της φόρμας) με CC στο `$mail_to`, ενημερώνοντάς
+   τον ότι απομένει η εξουσιοδότηση του παρόχου προς την ΑΑΔΕ. Χρησιμοποιεί το πρότυπο
+   `email_templates/notification.html`. Στο `LINK_EXISTING` (χωρίς αρχείο σύμβασης) δεν
+   στέλνεται αυτό το email.
 
 ### Αρχεία
 
@@ -116,6 +122,8 @@ $NOVUS_API_KEY = 'nvuscnspts_...';
 - `novus_request_view.php` — κατάσταση αίτησης, κατέβασμα/ανέβασμα σύμβασης.
 - `novus_contract_download.php` — proxy κατεβάσματος PDF (το API key μένει στον server).
 - `novus_signed_contract_upload.php` — ανέβασμα υπογεγραμμένης σύμβασης.
+- `email_templates/notification.html` — πρότυπο email (πλαίσιο/branding), με `%%MSG%%`
+  ως σημείο εισαγωγής του μηνύματος. Γεμίζεται με `render_notification_email()` (στο `mail.php`).
 
 > Το webservice απαιτεί πραγματικό ΑΦΜ με σωστό check digit — δοκιμαστικά «123456789» απορρίπτονται.
 > Δείτε το `9. Παγίδες` στο έγγραφο Novus Onboarding API για τις πιο συνηθισμένες παγίδες
