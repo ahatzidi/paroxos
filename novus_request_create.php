@@ -88,6 +88,31 @@ if (!$response['ok']) {
 
 save_novus_request($afm, $response['data'], $idempotencyKey, $payload['companyDetails']['transactionTypes']);
 
+// Email #1: στέλνεται πάντα, αμέσως μόλις δημιουργηθεί η αίτηση — δίνει στον πελάτη
+// τον σύνδεσμο προς τη σελίδα παρακολούθησης/κατεβάσματος/ανεβάσματος σύμβασης.
+{
+    global $mail_to, $APP_BASE_URL;
+
+    $companyName = $payload['companyDetails']['legalName'];
+    $customerEmail = $payload['contactInfo']['email'];
+    $viewUrl = rtrim((string) $APP_BASE_URL, '/') . '/novus_request_view.php?id=' . urlencode($response['data']['requestId']);
+
+    $messageHtml = 'Έχετε ξεκινήσει τη διαδικασία αιτήματος ενεργοποίησης παρόχου ηλεκτρονικής τιμολόγησης.'
+        . '<br><br>'
+        . 'Για να βρείτε την προσυμπληρωμένη σύμβαση, για να προχωρήσετε στο ανέβασμα της σύμβασης '
+        . 'αλλά και για τον έλεγχο της διαδικασίας, μπορείτε να επισκέπτεστε τη σελίδα '
+        . '<a href="' . htmlspecialchars($viewUrl, ENT_QUOTES) . '">' . htmlspecialchars($viewUrl, ENT_QUOTES) . '</a>';
+
+    $html = render_notification_email($messageHtml);
+    $subject = 'Η αίτησή σας ξεκίνησε — ' . $companyName;
+
+    $mailResult = smtp_send_mail($customerEmail, $subject, $html, null, $mail_to);
+
+    if (!$mailResult['ok']) {
+        error_log('Αποτυχία αποστολής email έναρξης αίτησης: ' . $mailResult['error']);
+    }
+}
+
 // Στη NEW_CONTRACT ροή, μόλις επιβεβαιωθεί ότι το (μη υπογεγραμμένο) αρχείο σύμβασης
 // έχει όντως παραληφθεί κανονικά, ενημερώνουμε τον πελάτη ότι απομένει η εξουσιοδότηση
 // του παρόχου προς την ΑΑΔΕ. Στο LINK_EXISTING δεν υπάρχει αρχείο σύμβασης — δεν στέλνουμε.
