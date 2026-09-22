@@ -88,8 +88,11 @@ if (!$response['ok']) {
 
 save_novus_request($afm, $response['data'], $idempotencyKey, $payload['companyDetails']['transactionTypes']);
 
-// Email #1: στέλνεται πάντα, αμέσως μόλις δημιουργηθεί η αίτηση — δίνει στον πελάτη
-// τον σύνδεσμο προς τη σελίδα παρακολούθησης/κατεβάσματος/ανεβάσματος σύμβασης.
+// Ένα μόνο email μετά τη δημιουργία της αίτησης: πάντα ο σύνδεσμος προς τη σελίδα
+// παρακολούθησης, και — αν είναι NEW_CONTRACT και επιβεβαιωθεί ότι το (μη υπογεγραμμένο)
+// αρχείο σύμβασης όντως παραλήφθηκε — προστίθεται και το κομμάτι για την εξουσιοδότηση
+// του παρόχου προς την ΑΑΔΕ. Στο LINK_EXISTING δεν υπάρχει αρχείο σύμβασης, οπότε μένει
+// μόνο το πρώτο κομμάτι.
 {
     global $mail_to, $APP_BASE_URL;
 
@@ -103,6 +106,22 @@ save_novus_request($afm, $response['data'], $idempotencyKey, $payload['companyDe
         . 'αλλά και για τον έλεγχο της διαδικασίας, μπορείτε να επισκέπτεστε τη σελίδα '
         . '<a href="' . htmlspecialchars($viewUrl, ENT_QUOTES) . '">' . htmlspecialchars($viewUrl, ENT_QUOTES) . '</a>';
 
+    if ($response['data']['requestType'] === 'NEW_CONTRACT' && !empty($response['data']['contract'])) {
+        $download = novus_download_contract($response['data']['requestId'], 'unsigned');
+
+        if ($download['ok']) {
+            $messageHtml .= '<br><br>'
+                . 'Το αίτημα έχει παραληφθεί από τον πάροχο και <b>απομένει ένα ακόμη βήμα</b>, '
+                . 'που είναι η <b>εξουσιοδότηση</b> του παρόχου, ώστε να προχωρήσει τη δήλωση στην ΑΑΔΕ. '
+                . 'Διαβάστε τις οδηγίες εδώ: '
+                . '<a href="https://verisysgr.atlassian.net/wiki/spaces/TSel/pages/4218191881" target="_blank">'
+                . 'https://verisysgr.atlassian.net/wiki/spaces/TSel/pages/4218191881</a>'
+                . '<br><br><strong>Το αίτημα δεν θα προχωρήσει αν δεν έχει εκτελεστεί και αυτό το βήμα !!</strong>';
+        } else {
+            error_log('Παραλείπεται το κομμάτι εξουσιοδότησης στο email — αποτυχία λήψης σύμβασης: ' . $download['error']);
+        }
+    }
+
     $html = render_notification_email($messageHtml);
     $subject = 'Η αίτησή σας ξεκίνησε — ' . $companyName;
 
@@ -110,37 +129,6 @@ save_novus_request($afm, $response['data'], $idempotencyKey, $payload['companyDe
 
     if (!$mailResult['ok']) {
         error_log('Αποτυχία αποστολής email έναρξης αίτησης: ' . $mailResult['error']);
-    }
-}
-
-// Στη NEW_CONTRACT ροή, μόλις επιβεβαιωθεί ότι το (μη υπογεγραμμένο) αρχείο σύμβασης
-// έχει όντως παραληφθεί κανονικά, ενημερώνουμε τον πελάτη ότι απομένει η εξουσιοδότηση
-// του παρόχου προς την ΑΑΔΕ. Στο LINK_EXISTING δεν υπάρχει αρχείο σύμβασης — δεν στέλνουμε.
-if ($response['data']['requestType'] === 'NEW_CONTRACT' && !empty($response['data']['contract'])) {
-    $download = novus_download_contract($response['data']['requestId'], 'unsigned');
-
-    if ($download['ok']) {
-        $companyName = $payload['companyDetails']['legalName'];
-        $customerEmail = $payload['contactInfo']['email'];
-
-        $messageHtml = 'Το αίτημα έχει παραληφθεί από τον πάροχο και <b>απομένει ένα ακόμη βήμα</b>, '
-            . 'που είναι η <b>εξουσιοδότηση</b> του παρόχου, ώστε να προχωρήσει τη δήλωση στην ΑΑΔΕ. '
-            . 'Διαβάστε τις οδηγίες εδώ: '
-            . '<a href="https://verisysgr.atlassian.net/wiki/spaces/TSel/pages/4218191881" target="_blank">'
-            . 'https://verisysgr.atlassian.net/wiki/spaces/TSel/pages/4218191881</a>'
-            . '<br><br><strong>Το αίτημα δεν θα προχωρήσει αν δεν έχει εκτελεστεί και αυτό το βήμα !!</strong>';
-
-        $html = render_notification_email($messageHtml);
-        $subject = 'Απαιτείται εξουσιοδότηση παρόχου — ' . $companyName;
-
-        global $mail_to;
-        $mailResult = smtp_send_mail($customerEmail, $subject, $html, null, $mail_to);
-
-        if (!$mailResult['ok']) {
-            error_log('Αποτυχία αποστολής email εξουσιοδότησης παρόχου: ' . $mailResult['error']);
-        }
-    } else {
-        error_log('Δεν στάλθηκε email εξουσιοδότησης — αποτυχία λήψης σύμβασης: ' . $download['error']);
     }
 }
 
