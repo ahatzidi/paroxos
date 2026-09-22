@@ -111,7 +111,7 @@ save_novus_request($afm, $response['data'], $idempotencyKey, $payload['companyDe
 
         if ($download['ok']) {
             $messageHtml .= '<br><br>'
-                . 'Το αίτημα έχει παραληφθεί από τον πάροχο και <b>απομένει ένα ακόμη βήμα</b>, '
+                . 'Εκτός από τη σύμβαση που πρέπει να υπογράψετε και να ανεβάσετε στη σελίδα, <b>απομένει ένα ακόμη βήμα</b>, '
                 . 'που είναι η <b>εξουσιοδότηση</b> του παρόχου, ώστε να προχωρήσει τη δήλωση στην ΑΑΔΕ. '
                 . 'Διαβάστε τις οδηγίες εδώ: '
                 . '<a href="https://verisysgr.atlassian.net/wiki/spaces/TSel/pages/4218191881" target="_blank">'
