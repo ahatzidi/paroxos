@@ -50,13 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .hint-text { color: #555; margin-bottom: 16px; }
     .btn { display: inline-block; margin-top: 16px; padding: 10px 20px; font-size: 1rem; background: #1a56db; color: #fff; border-radius: 6px; text-decoration: none; }
     .btn:hover { background: #1544ab; }
-    .existing-requests { margin-top: 24px; }
-    .existing-requests h2 { font-size: 1.05rem; margin-bottom: 8px; }
-    .existing-requests ul { list-style: none; padding: 0; }
-    .existing-requests li { padding: 10px 0; border-bottom: 1px solid #eee; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.8rem; background: #e0e7ff; color: #3730a3; margin-left: 8px; }
-    .badge.approved, .badge.completed { background: #d1fae5; color: #065f46; }
-    .badge.rejected, .badge.action_required, .badge.cancelled { background: #fde8e8; color: #9b1c1c; }
 </style>
 </head>
 <body>
@@ -116,25 +109,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </tr>
         <?php endif; ?>
     </table>
-
-    <?php $existingRequests = list_novus_requests_by_afm($result['afm']); ?>
-
-    <?php if ($existingRequests): ?>
-        <div class="existing-requests">
-            <h2>Υπάρχουσες αιτήσεις Novus</h2>
-            <ul>
-                <?php foreach ($existingRequests as $req): ?>
-                    <li>
-                        <a href="novus_request_view.php?id=<?= urlencode($req['novus_request_id']) ?>">
-                            <?= htmlspecialchars($req['novus_request_id'], ENT_QUOTES) ?>
-                        </a>
-                        <span class="badge <?= strtolower($req['status']) ?>"><?= htmlspecialchars($req['status'], ENT_QUOTES) ?></span>
-                        <span style="color:#888;font-size:0.85rem;"> &middot; <?= htmlspecialchars($req['created_at'], ENT_QUOTES) ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
 
     <a class="btn" href="novus_request_new.php?afm=<?= urlencode($result['afm']) ?>">
         Αίτηση σύνδεσης με Novus &rarr;
