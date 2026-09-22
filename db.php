@@ -159,12 +159,13 @@ function get_novus_request($novusRequestId) {
     return $row ?: null;
 }
 
-// Επιστρέφει τις αιτήσεις με status ACTION_REQUIRED που έχουν customer_email και δεν έχουν
-// λάβει υπενθύμιση τις τελευταίες 24 ώρες (ώστε ένα cron που τρέχει συχνά να μη σπαμάρει).
+// Επιστρέφει τις αιτήσεις με status ACTION_REQUIRED ή PENDING_SIGNATURE που έχουν
+// customer_email και δεν έχουν λάβει υπενθύμιση τις τελευταίες 24 ώρες (ώστε ένα cron
+// που τρέχει συχνά να μη σπαμάρει).
 function list_action_required_requests_needing_reminder() {
     $conn = get_db();
     $sql = "SELECT * FROM novus_requests
-            WHERE status = 'ACTION_REQUIRED'
+            WHERE status IN ('ACTION_REQUIRED', 'PENDING_SIGNATURE')
               AND customer_email IS NOT NULL AND customer_email <> ''
               AND (last_reminder_sent_at IS NULL OR last_reminder_sent_at < (NOW() - INTERVAL 1 DAY))
             ORDER BY created_at ASC";
