@@ -86,7 +86,7 @@ if (!$response['ok']) {
     exit;
 }
 
-save_novus_request($afm, $response['data'], $idempotencyKey);
+save_novus_request($afm, $response['data'], $idempotencyKey, $payload['companyDetails']['transactionTypes']);
 
 // Στη NEW_CONTRACT ροή, μόλις επιβεβαιωθεί ότι το (μη υπογεγραμμένο) αρχείο σύμβασης
 // έχει όντως παραληφθεί κανονικά, ενημερώνουμε τον πελάτη ότι απομένει η εξουσιοδότηση

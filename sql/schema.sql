@@ -31,11 +31,18 @@ CREATE TABLE IF NOT EXISTS novus_requests (
     aade_statement_status  VARCHAR(30) NULL,
     idempotency_key        VARCHAR(64) NULL,
     raw_json               JSON NULL,
+    is_b2b                 TINYINT(1) NULL,
+    is_b2c                 TINYINT(1) NULL,
     created_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_novus_request_id (novus_request_id),
     KEY idx_company_afm (company_afm)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Για υπάρχουσες εγκαταστάσεις όπου ο πίνακας novus_requests υπάρχει ήδη
+-- χωρίς αυτές τις στήλες (MariaDB 10.0.2+ υποστηρίζει IF NOT EXISTS):
+ALTER TABLE novus_requests ADD COLUMN IF NOT EXISTS is_b2b TINYINT(1) NULL AFTER raw_json;
+ALTER TABLE novus_requests ADD COLUMN IF NOT EXISTS is_b2c TINYINT(1) NULL AFTER is_b2b;
 
 CREATE TABLE IF NOT EXISTS novus_webhook_events (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

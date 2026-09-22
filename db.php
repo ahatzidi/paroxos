@@ -86,14 +86,18 @@ function get_company_by_afm($afm) {
 }
 
 // Αποθηκεύει/ενημερώνει μια αίτηση Novus από τα δεδομένα που επέστρεψε το API (data block).
-function save_novus_request($companyAfm, $data, $idempotencyKey = null) {
+// $transactionTypes (π.χ. ['B2B'], ['B2C'], ['B2B','B2C']) είναι προαιρετικό — όταν λείπει
+// (π.χ. σε ενημερώσεις από webhook/polling που δεν το ξέρουν), οι στήλες is_b2b/is_b2c
+// διατηρούν την τρέχουσα τιμή τους αντί να σβηστούν.
+function save_novus_request($companyAfm, $data, $idempotencyKey = null, $transactionTypes = null) {
     $conn = get_db();
 
     $sql = "INSERT INTO novus_requests (
                 company_afm, novus_request_id, request_type, status,
                 contract_number, contract_date, template_version,
-                provisioning_status, aade_statement_status, idempotency_key, raw_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                provisioning_status, aade_statement_status, idempotency_key, raw_json,
+                is_b2b, is_b2c
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 request_type = VALUES(request_type),
                 status = VALUES(status),
@@ -102,7 +106,9 @@ function save_novus_request($companyAfm, $data, $idempotencyKey = null) {
                 template_version = VALUES(template_version),
                 provisioning_status = VALUES(provisioning_status),
                 aade_statement_status = VALUES(aade_statement_status),
-                raw_json = VALUES(raw_json)";
+                raw_json = VALUES(raw_json),
+                is_b2b = IF(VALUES(is_b2b) IS NULL, is_b2b, VALUES(is_b2b)),
+                is_b2c = IF(VALUES(is_b2c) IS NULL, is_b2c, VALUES(is_b2c))";
 
     $stmt = mysqli_prepare($conn, $sql);
 
@@ -113,9 +119,12 @@ function save_novus_request($companyAfm, $data, $idempotencyKey = null) {
     $aadeStatementStatus = $data['aadeStatement']['status'] ?? null;
     $rawJson = json_encode($data, JSON_UNESCAPED_UNICODE);
 
+    $isB2b = $transactionTypes !== null ? (in_array('B2B', $transactionTypes, true) ? 1 : 0) : null;
+    $isB2c = $transactionTypes !== null ? (in_array('B2C', $transactionTypes, true) ? 1 : 0) : null;
+
     mysqli_stmt_bind_param(
         $stmt,
-        'sssssssssss',
+        'sssssssssssii',
         $companyAfm,
         $data['requestId'],
         $data['requestType'],
@@ -126,7 +135,9 @@ function save_novus_request($companyAfm, $data, $idempotencyKey = null) {
         $provisioningStatus,
         $aadeStatementStatus,
         $idempotencyKey,
-        $rawJson
+        $rawJson,
+        $isB2b,
+        $isB2c
     );
 
     mysqli_stmt_execute($stmt);
