@@ -99,7 +99,7 @@ $idempotencyKey = novus_uuid4();
     <label for="adminVatNumber">ΑΦΜ εκπροσώπου</label>
     <input type="text" id="adminVatNumber" name="adminVatNumber" maxlength="9" pattern="\d{9}" required>
 
-    <h2>Στοιχεία παρόχου internet <span class="hint">(υποχρεωτικά μόνο για B2C)</span></h2>
+    <h2>Στοιχεία εναλλακτικού παρόχου internet, για παράδειγμα συμβόλαιο κινητής τηλεφωνίας <span class="hint">(υποχρεωτικά μόνο για B2C)</span></h2>
 
     <div id="isp-fields">
         <label for="ispProviderName">Πάροχος</label>
