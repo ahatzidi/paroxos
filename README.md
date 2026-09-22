@@ -193,3 +193,24 @@ https://paroxos.totalschool.gr/novus_webhook_register.php
 > Novus. Αν το SMTP είναι αργό, καθυστερεί λίγο το 200 OK — αποδεκτό για τον όγκο
 > events που περιγράφει το API, αλλά αν χρειαστεί ποτέ ταχύτερο ack, ο πιο απλός δρόμος
 > είναι να καταγράφεται το event πρώτα και να στέλνεται το email με ξεχωριστό cron.
+
+## Βήμα 4: Υπενθύμιση σε πελάτες με status ACTION_REQUIRED
+
+`cron_action_required_reminder.php` είναι ένα CLI-only script (αρνείται να τρέξει μέσω
+web request) που:
+
+1. Βρίσκει όλες τις αιτήσεις Novus με `status = 'ACTION_REQUIRED'` που έχουν
+   αποθηκευμένο `customer_email` και δεν έχουν λάβει υπενθύμιση τις τελευταίες 24 ώρες.
+2. Στέλνει σε κάθε πελάτη email με link προς τη σελίδα του (`novus_request_view.php`) και
+   mailto σύνδεσμο προς `support@totalschool.io`. CC στο `$mail_to`.
+3. Σημειώνει `last_reminder_sent_at` ώστε να μη στέλνεται ξανά μέσα στο ίδιο 24ωρο, όσο
+   συχνά κι αν τρέχει το cron.
+
+Προσθέστε στο cron του server (π.χ. Cloudways Cron Job Management):
+
+```
+0 9 * * * /usr/bin/php /full/path/to/paroxos/cron_action_required_reminder.php >> /full/path/to/paroxos/cron.log 2>&1
+```
+
+Το `customer_email` καταγράφεται αυτόματα στο `novus_requests` όταν δημιουργείται μια
+αίτηση (`novus_request_create.php`), οπότε δεν χρειάζεται επιπλέον ρύθμιση.

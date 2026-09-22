@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS novus_requests (
     raw_json               JSON NULL,
     is_b2b                 TINYINT(1) NULL,
     is_b2c                 TINYINT(1) NULL,
+    customer_email          VARCHAR(255) NULL,
+    last_reminder_sent_at   DATETIME NULL,
     created_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_novus_request_id (novus_request_id),
@@ -43,6 +45,8 @@ CREATE TABLE IF NOT EXISTS novus_requests (
 -- χωρίς αυτές τις στήλες (MariaDB 10.0.2+ υποστηρίζει IF NOT EXISTS):
 ALTER TABLE novus_requests ADD COLUMN IF NOT EXISTS is_b2b TINYINT(1) NULL AFTER raw_json;
 ALTER TABLE novus_requests ADD COLUMN IF NOT EXISTS is_b2c TINYINT(1) NULL AFTER is_b2b;
+ALTER TABLE novus_requests ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255) NULL AFTER is_b2c;
+ALTER TABLE novus_requests ADD COLUMN IF NOT EXISTS last_reminder_sent_at DATETIME NULL AFTER customer_email;
 
 CREATE TABLE IF NOT EXISTS novus_webhook_events (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

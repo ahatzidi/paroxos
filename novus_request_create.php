@@ -86,7 +86,7 @@ if (!$response['ok']) {
     exit;
 }
 
-save_novus_request($afm, $response['data'], $idempotencyKey, $payload['companyDetails']['transactionTypes']);
+save_novus_request($afm, $response['data'], $idempotencyKey, $payload['companyDetails']['transactionTypes'], $payload['contactInfo']['email']);
 
 // Ένα μόνο email μετά τη δημιουργία της αίτησης: πάντα ο σύνδεσμος προς τη σελίδα
 // παρακολούθησης, και — αν είναι NEW_CONTRACT και επιβεβαιωθεί ότι το (μη υπογεγραμμένο)

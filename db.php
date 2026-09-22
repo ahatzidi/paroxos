@@ -86,18 +86,18 @@ function get_company_by_afm($afm) {
 }
 
 // Αποθηκεύει/ενημερώνει μια αίτηση Novus από τα δεδομένα που επέστρεψε το API (data block).
-// $transactionTypes (π.χ. ['B2B'], ['B2C'], ['B2B','B2C']) είναι προαιρετικό — όταν λείπει
-// (π.χ. σε ενημερώσεις από webhook/polling που δεν το ξέρουν), οι στήλες is_b2b/is_b2c
-// διατηρούν την τρέχουσα τιμή τους αντί να σβηστούν.
-function save_novus_request($companyAfm, $data, $idempotencyKey = null, $transactionTypes = null) {
+// $transactionTypes (π.χ. ['B2B'], ['B2C'], ['B2B','B2C']) και $customerEmail είναι προαιρετικά —
+// όταν λείπουν (π.χ. σε ενημερώσεις από webhook/polling που δεν τα ξέρουν), οι αντίστοιχες
+// στήλες διατηρούν την τρέχουσα τιμή τους αντί να σβηστούν.
+function save_novus_request($companyAfm, $data, $idempotencyKey = null, $transactionTypes = null, $customerEmail = null) {
     $conn = get_db();
 
     $sql = "INSERT INTO novus_requests (
                 company_afm, novus_request_id, request_type, status,
                 contract_number, contract_date, template_version,
                 provisioning_status, aade_statement_status, idempotency_key, raw_json,
-                is_b2b, is_b2c
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                is_b2b, is_b2c, customer_email
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 request_type = VALUES(request_type),
                 status = VALUES(status),
@@ -108,7 +108,8 @@ function save_novus_request($companyAfm, $data, $idempotencyKey = null, $transac
                 aade_statement_status = VALUES(aade_statement_status),
                 raw_json = VALUES(raw_json),
                 is_b2b = IF(VALUES(is_b2b) IS NULL, is_b2b, VALUES(is_b2b)),
-                is_b2c = IF(VALUES(is_b2c) IS NULL, is_b2c, VALUES(is_b2c))";
+                is_b2c = IF(VALUES(is_b2c) IS NULL, is_b2c, VALUES(is_b2c)),
+                customer_email = IF(VALUES(customer_email) IS NULL, customer_email, VALUES(customer_email))";
 
     $stmt = mysqli_prepare($conn, $sql);
 
@@ -124,7 +125,7 @@ function save_novus_request($companyAfm, $data, $idempotencyKey = null, $transac
 
     mysqli_stmt_bind_param(
         $stmt,
-        'sssssssssssii',
+        'sssssssssssiis',
         $companyAfm,
         $data['requestId'],
         $data['requestType'],
@@ -137,7 +138,8 @@ function save_novus_request($companyAfm, $data, $idempotencyKey = null, $transac
         $idempotencyKey,
         $rawJson,
         $isB2b,
-        $isB2c
+        $isB2c,
+        $customerEmail
     );
 
     mysqli_stmt_execute($stmt);
@@ -155,6 +157,33 @@ function get_novus_request($novusRequestId) {
     mysqli_stmt_close($stmt);
 
     return $row ?: null;
+}
+
+// Επιστρέφει τις αιτήσεις με status ACTION_REQUIRED που έχουν customer_email και δεν έχουν
+// λάβει υπενθύμιση τις τελευταίες 24 ώρες (ώστε ένα cron που τρέχει συχνά να μη σπαμάρει).
+function list_action_required_requests_needing_reminder() {
+    $conn = get_db();
+    $sql = "SELECT * FROM novus_requests
+            WHERE status = 'ACTION_REQUIRED'
+              AND customer_email IS NOT NULL AND customer_email <> ''
+              AND (last_reminder_sent_at IS NULL OR last_reminder_sent_at < (NOW() - INTERVAL 1 DAY))
+            ORDER BY created_at ASC";
+    $result = mysqli_query($conn, $sql);
+    $rows = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $rows[] = $row;
+    }
+
+    return $rows;
+}
+
+// Σημειώνει ότι μόλις στάλθηκε υπενθύμιση για μια αίτηση.
+function mark_reminder_sent($novusRequestId) {
+    $conn = get_db();
+    $stmt = mysqli_prepare($conn, 'UPDATE novus_requests SET last_reminder_sent_at = NOW() WHERE novus_request_id = ?');
+    mysqli_stmt_bind_param($stmt, 's', $novusRequestId);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
 }
 
 // Επιστρέφει όλες τις αιτήσεις Novus για ένα ΑΦΜ, πιο πρόσφατες πρώτα.
