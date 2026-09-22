@@ -31,6 +31,19 @@ $statusLabels = [
 $statusLabel = $statusLabels[$data['status']] ?? $data['status'];
 
 $uploadMessage = $_GET['uploaded'] ?? null;
+
+// Η Novus επιστρέφει ελεύθερο κείμενο σε message/provisioning.error. Όταν αφορά την
+// έλλειψη εξουσιοδότησης παρόχου στο myAADE, προσθέτουμε από κάτω σύνδεσμο προς τις οδηγίες.
+function novus_render_message_html($text) {
+    $html = nl2br(htmlspecialchars($text, ENT_QUOTES));
+
+    if (stripos($text, 'myAADE') !== false || stripos($text, 'Πάροχος Ηλεκτρονικής Τιμολόγησης') !== false) {
+        $html .= '<br><a href="https://verisysgr.atlassian.net/wiki/spaces/TSel/pages/4218191881" target="_blank" rel="noopener">'
+            . 'Δείτε οδηγίες για την προσθήκη της εξουσιοδότησης</a>';
+    }
+
+    return $html;
+}
 ?>
 <!DOCTYPE html>
 <html lang="el">
@@ -72,7 +85,7 @@ $uploadMessage = $_GET['uploaded'] ?? null;
         την ανεβάσετε στο πεδίο «Ανέβασμα» ώστε να σταλεί στον πάροχο.
     </div>
 <?php elseif (!empty($data['message'])): ?>
-    <p><?= htmlspecialchars($data['message'], ENT_QUOTES) ?></p>
+    <p><?= novus_render_message_html($data['message']) ?></p>
 <?php endif; ?>
 
 <?php if ($uploadMessage === '1'): ?>
@@ -120,7 +133,7 @@ $uploadMessage = $_GET['uploaded'] ?? null;
         <tr><th>Σύμβαση</th><td><?= htmlspecialchars($data['provisioning']['contractUploaded'] ?? '-', ENT_QUOTES) ?></td></tr>
         <tr><th>Δήλωση ΑΑΔΕ</th><td><?= htmlspecialchars($data['provisioning']['statementSent'] ?? '-', ENT_QUOTES) ?></td></tr>
         <?php if (!empty($data['provisioning']['error'])): ?>
-        <tr><th>Σφάλμα</th><td><?= htmlspecialchars($data['provisioning']['error'], ENT_QUOTES) ?></td></tr>
+        <tr><th>Σφάλμα</th><td><?= novus_render_message_html($data['provisioning']['error']) ?></td></tr>
         <?php endif; ?>
     </table>
 <?php endif; ?>
