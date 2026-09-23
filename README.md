@@ -214,3 +214,34 @@ web request) που:
 
 Το `customer_email` καταγράφεται αυτόματα στο `novus_requests` όταν δημιουργείται μια
 αίτηση (`novus_request_create.php`), οπότε δεν χρειάζεται επιπλέον ρύθμιση.
+
+## Βήμα 5: Read-only API κατάστασης αίτησης
+
+`api_novus_status.php` επιστρέφει σε JSON τις αιτήσεις Novus ενός ΑΦΜ (μπορεί να υπάρχουν
+παραπάνω από μία), με τα πεδία `status`, `is_b2b`, `is_b2c`, `customer_email`.
+
+Δεν είναι δημόσιο — το `customer_email` είναι προσωπικό δεδομένο. Απαιτεί το header
+`X-API-KEY` να ταιριάζει με το `$PAROXOS_API_KEY` του `config.php` (παράγετέ το με
+`openssl rand -hex 32`).
+
+```bash
+curl -H "X-API-KEY: <το κλειδί σας>" \
+  "https://paroxos.totalschool.gr/api_novus_status.php?afm=094019245"
+```
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "request_id": "req_8f7b2c9a",
+      "status": "UNDER_REVIEW",
+      "is_b2b": true,
+      "is_b2c": false,
+      "customer_email": "info@papacorp.gr"
+    }
+  ]
+}
+```
+
+Χωρίς έγκυρο ΑΦΜ ή σωστό API key, επιστρέφει `400`/`401` με `{"success": false, "error": "..."}`.
