@@ -187,6 +187,18 @@ function mark_reminder_sent($novusRequestId) {
     mysqli_stmt_close($stmt);
 }
 
+// Επιστρέφει όλες τις αιτήσεις Novus, όλων των ΑΦΜ, πιο πρόσφατες πρώτα.
+function list_all_novus_requests() {
+    $conn = get_db();
+    $result = mysqli_query($conn, 'SELECT * FROM novus_requests ORDER BY created_at DESC');
+    $rows = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $rows[] = $row;
+    }
+
+    return $rows;
+}
+
 // Επιστρέφει όλες τις αιτήσεις Novus για ένα ΑΦΜ, πιο πρόσφατες πρώτα.
 function list_novus_requests_by_afm($afm) {
     $conn = get_db();

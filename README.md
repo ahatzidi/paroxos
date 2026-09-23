@@ -252,3 +252,30 @@ curl -X POST "https://paroxos.totalschool.gr/api_novus_status.php" \
 ```
 
 Χωρίς έγκυρο ΑΦΜ ή σωστό API key, επιστρέφει `400`/`401` με `{"success": false, "error": "..."}`.
+
+### Όλες οι αιτήσεις μαζί
+
+`api_novus_status_all.php` (POST, ίδιο κλειδί) επιστρέφει ΟΛΕΣ τις αιτήσεις Novus (όλων
+των ΑΦΜ) σε ένα combined JSON — χωρίς φίλτρο ΑΦΜ, οπότε κάθε εγγραφή περιλαμβάνει και το
+`afm` της για αναγνώριση.
+
+```bash
+curl -X POST "https://paroxos.totalschool.gr/api_novus_status_all.php" \
+  -H "X-API-KEY: <το κλειδί>"
+```
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "afm": "094019245",
+      "request_id": "req_8f7b2c9a",
+      "status": "UNDER_REVIEW",
+      "is_b2b": true,
+      "is_b2c": false,
+      "customer_email": "info@papacorp.gr"
+    }
+  ]
+}
+```
