@@ -33,11 +33,6 @@ $NOVUS_WEBHOOK_SECRET = '';
 // Δημόσιο URL της εγκατάστασής σας (χωρίς τελικό /), για apsolute links σε emails.
 $APP_BASE_URL = 'https://paroxos.totalschool.gr';
 
-// Κλειδί για το εσωτερικό read-only API (api_novus_status.php). Παράγετε ένα τυχαίο,
-// μεγάλο string, π.χ. `openssl rand -hex 32`, και δώστε το σε όποιο σύστημα το καλεί
-// μέσω header X-API-KEY.
-$PAROXOS_API_KEY = 'change_me_random_api_key';
-
 // ##########   Amazon SMTP    ##########
 $mailhost = 'email-smtp.eu-west-1.amazonaws.com';
 $mailport = 587;

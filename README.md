@@ -217,16 +217,23 @@ web request) που:
 
 ## Βήμα 5: Read-only API κατάστασης αίτησης
 
-`api_novus_status.php` επιστρέφει σε JSON τις αιτήσεις Novus ενός ΑΦΜ (μπορεί να υπάρχουν
-παραπάνω από μία), με τα πεδία `status`, `is_b2b`, `is_b2c`, `customer_email`.
+`api_novus_status.php` (μόνο **POST**) επιστρέφει σε JSON τις αιτήσεις Novus ενός ΑΦΜ
+(μπορεί να υπάρχουν παραπάνω από μία), με τα πεδία `status`, `is_b2b`, `is_b2c`,
+`customer_email`.
 
-Δεν είναι δημόσιο — το `customer_email` είναι προσωπικό δεδομένο. Απαιτεί το header
-`X-API-KEY` να ταιριάζει με το `$PAROXOS_API_KEY` του `config.php` (παράγετέ το με
-`openssl rand -hex 32`).
+Δεν είναι δημόσιο — το `customer_email` είναι προσωπικό δεδομένο. Απαιτεί το κλειδί
+`API_KEY` (hardcoded μέσα στο αρχείο, όχι στο `config.php`), είτε ως header `X-API-KEY`
+είτε ως πεδίο `api_key` στο POST body.
 
 ```bash
-curl -H "X-API-KEY: <το κλειδί σας>" \
-  "https://paroxos.totalschool.gr/api_novus_status.php?afm=094019245"
+curl -X POST "https://paroxos.totalschool.gr/api_novus_status.php" \
+  -d "afm=094019245" \
+  -d "api_key=<το κλειδί>"
+
+# ή με το κλειδί σε header:
+curl -X POST "https://paroxos.totalschool.gr/api_novus_status.php" \
+  -H "X-API-KEY: <το κλειδί>" \
+  -d "afm=094019245"
 ```
 
 ```json
